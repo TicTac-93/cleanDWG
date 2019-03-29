@@ -128,6 +128,15 @@ class cleanDWGUI(QtW.QDialog):
         parents = []
         children = []
 
+        # It's much faster to sort the parents and children into layers, rather than deleting objects
+        # Check if these layers already exist, if they do use those.  Else, make them.
+        layer_parents = rt.LayerManager.getLayerFromName('__CLEAN DWG - PARENTS - DELETE')
+        if layer_parents == None:
+            layer_parents = rt.LayerManager.newLayerFromName('__CLEAN DWG - PARENTS - DELETE')
+        layer_children = rt.LayerManager.getLayerFromName('__CLEAN DWG - CHILDREN - CLEANED UP')
+        if layer_children == None:
+            layer_children = rt.LayerManager.newLayerFromName('__CLEAN DWG - CHILDREN - CLEANED UP')
+
         with self._pymxs.undo(True, 'Clean DWG'), self._pymxs.redraw(False):
             # Build list of selected objects
             self._lbl_status.setText(self._status[1])
@@ -163,12 +172,13 @@ class cleanDWGUI(QtW.QDialog):
             for child in children:
                 child.name = child.parent.name
                 child.parent = None
+                layer_children.addNode(child)
 
                 progress += 1
                 self._bar_progress.setValue(progress)
 
             for parent in parents:
-                rt.delete(parent)
+                layer_parents.addNode(parent)
 
                 progress += 1
                 self._bar_progress.setValue(progress)
@@ -191,4 +201,4 @@ ui = cleanDWGUI(_uif, pymxs, _app)
 ui.show()
 
 # DEBUG
-print "\rTest Version 1"
+print "\rTest Version 2"
