@@ -137,6 +137,8 @@ class cleanDWGUI(QtW.QDialog):
         if layer_children == None:
             layer_children = rt.LayerManager.newLayerFromName('__CLEAN DWG - CHILDREN - CLEANED UP')
 
+        layer_parents.isHidden = True
+
         with self._pymxs.undo(True, 'Clean DWG'), self._pymxs.redraw(False):
             # Build list of selected objects
             self._lbl_status.setText(self._status[1])
@@ -160,12 +162,15 @@ class cleanDWGUI(QtW.QDialog):
             self._lbl_status.setText(self._status[3])
             progress = 0
             for obj in selection:
-                rt.getSubAnim(obj, 3).controller = rt.prs()
+                # in pymxs, obj.controller is the same as MAXScript obj.transform.controller
+                # More confusingly, this seems to be the only way to actually set a new controller in pymxs without
+                # using rt.refs.replaceReference()
+                obj.controller = rt.prs()
 
                 progress += 1
                 self._bar_progress.setValue(progress)
 
-            # Unparent children and delete parent objects
+            # Unparent children and organize objects into layers
             self._lbl_status.setText(self._status[4])
             self._bar_progress.setMaximum(len(children) + len(parents))
             progress = 0
@@ -201,4 +206,4 @@ ui = cleanDWGUI(_uif, pymxs, _app)
 ui.show()
 
 # DEBUG
-print "\rTest Version 2"
+print "\rTest Version 3"
