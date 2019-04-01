@@ -1,6 +1,6 @@
-# ----------------------------
-#   Clean DWG v1.0.0 Release
-# ----------------------------
+# -----------------------
+#   Clean DWG DEV BUILD
+# -----------------------
 
 # Destroys instances of the dialog before recreating it
 # This has to go first, before modules are reloaded or the ui var is re-declared.
@@ -77,12 +77,15 @@ class cleanDWGUI(QtW.QDialog):
 
         # Titling
 
-        self._window_title = 'Clean DWG v1.0.0'
+        self._window_title = 'Clean DWG - DEV BUILD'
         self.setWindowTitle(self._window_title)
 
         # ---------------------------------------------------
         #                   Widget Setup
         # ---------------------------------------------------
+
+        self._chk_expand = self.findChild(QtW.QCheckBox, 'chk_expand')
+        self._chk_full_scene = self.findChild(QtW.QCheckBox, 'chk_fullScene')
 
         self._btn_clean = self.findChild(QtW.QPushButton, 'btn_clean')
         self._bar_progress = self.findChild(QtW.QProgressBar, 'bar_progress')
@@ -123,6 +126,9 @@ class cleanDWGUI(QtW.QDialog):
     #                  Public Methods
     # ---------------------------------------------------
 
+    # TODO: Set up options checking
+    # TODO: Add functionality for "Expand Selection" and "Clean Entire Scene" options
+
     def clean(self):
         rt = self._pymxs.runtime
         selection = []
@@ -143,7 +149,7 @@ class cleanDWGUI(QtW.QDialog):
                 layer_parents.isHidden = True
 
                 # 1/4
-                # Build list of selected objects
+                # Build list of selected objects, optionally including their entire hierarchy.
                 self._lbl_status.setText(self._status[1])
                 selection = rt.getCurrentSelection()
 
