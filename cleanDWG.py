@@ -1,6 +1,6 @@
-# -----------------------
-#   Clean DWG Dev Build
-# -----------------------
+# ----------------------------
+#   Clean DWG v1.0.0 Release
+# ----------------------------
 
 # Destroys instances of the dialog before recreating it
 # This has to go first, before modules are reloaded or the ui var is re-declared.
@@ -77,7 +77,7 @@ class cleanDWGUI(QtW.QDialog):
 
         # Titling
 
-        self._window_title = 'Clean DWG - DEV BUILD'
+        self._window_title = 'Clean DWG v1.0.0'
         self.setWindowTitle(self._window_title)
 
         # ---------------------------------------------------
@@ -107,7 +107,8 @@ class cleanDWGUI(QtW.QDialog):
                         '[2/4] Building list of Parents / Children...',
                         '[3/4] Making Transform Controllers unique...',
                         '[4/4] Cleaning up Parents...',
-                        'Done.']
+                        'Done.',
+                        '%s Cleanup failed!  Check the Max Listener for details.' % self._err]
         # Set initial status label
         self._lbl_status.setText(self._status[0])
 
@@ -128,69 +129,80 @@ class cleanDWGUI(QtW.QDialog):
         parents = []
         children = []
 
-        # It's much faster to sort the parents and children into layers, rather than deleting objects
-        # Check if these layers already exist, if they do use those.  Else, make them.
-        layer_parents = rt.LayerManager.getLayerFromName('__CLEAN DWG - PARENTS - DELETE')
-        if layer_parents == None:
-            layer_parents = rt.LayerManager.newLayerFromName('__CLEAN DWG - PARENTS - DELETE')
-        layer_children = rt.LayerManager.getLayerFromName('__CLEAN DWG - CHILDREN - CLEANED UP')
-        if layer_children == None:
-            layer_children = rt.LayerManager.newLayerFromName('__CLEAN DWG - CHILDREN - CLEANED UP')
+        try:
+            with self._pymxs.undo(True, 'Clean DWG'), self._pymxs.redraw(False):
+                # It's much faster to sort the parents and children into layers, rather than deleting objects
+                # Check if these layers already exist, if they do use those.  Else, make them.
+                layer_parents = rt.LayerManager.getLayerFromName('__CLEAN DWG - PARENTS - DELETE')
+                if layer_parents == None:
+                    layer_parents = rt.LayerManager.newLayerFromName('__CLEAN DWG - PARENTS - DELETE')
+                layer_children = rt.LayerManager.getLayerFromName('__CLEAN DWG - CHILDREN - CLEANED UP')
+                if layer_children == None:
+                    layer_children = rt.LayerManager.newLayerFromName('__CLEAN DWG - CHILDREN - CLEANED UP')
 
-        layer_parents.isHidden = True
+                layer_parents.isHidden = True
 
-        with self._pymxs.undo(True, 'Clean DWG'), self._pymxs.redraw(False):
-            # Build list of selected objects
-            self._lbl_status.setText(self._status[1])
-            selection = rt.getCurrentSelection()
+                # 1/4
+                # Build list of selected objects
+                self._lbl_status.setText(self._status[1])
+                selection = rt.getCurrentSelection()
 
-            # Build Parent / Child lists
-            self._lbl_status.setText(self._status[2])
-            self._bar_progress.setMaximum(len(selection))
-            progress = 0
-            self._bar_progress.setValue(progress)
-            for obj in selection:
-                if rt.classOf(obj) == rt.LinkComposite:
-                    parents.append(obj)
-                elif rt.classOf(obj.parent) == rt.LinkComposite:
-                    children.append(obj)
-
-                progress += 1
+                # 2/4
+                # Build Parent / Child lists
+                self._lbl_status.setText(self._status[2])
+                self._bar_progress.setMaximum(len(selection))
+                progress = 0
                 self._bar_progress.setValue(progress)
+                for obj in selection:
+                    if rt.classOf(obj) == rt.LinkComposite:
+                        parents.append(obj)
+                    elif rt.classOf(obj.parent) == rt.LinkComposite:
+                        children.append(obj)
 
-            # Give each object unique transform controllers
-            self._lbl_status.setText(self._status[3])
-            progress = 0
-            for obj in selection:
-                # in pymxs, obj.controller is the same as MAXScript obj.transform.controller
-                # More confusingly, this seems to be the only way to actually set a new controller in pymxs without
-                # using rt.refs.replaceReference()
-                obj.controller = rt.prs()
+                    progress += 1
+                    self._bar_progress.setValue(progress)
 
-                progress += 1
-                self._bar_progress.setValue(progress)
+                # 3/4
+                # Give each object unique transform controllers
+                self._lbl_status.setText(self._status[3])
+                progress = 0
+                for obj in selection:
+                    # in pymxs, obj.controller is the same as MAXScript obj.transform.controller
+                    # More confusingly, this seems to be the only way to actually set a new controller in pymxs without
+                    # using rt.refs.replaceReference()
+                    obj.controller = rt.prs()
 
-            # Unparent children and organize objects into layers
-            self._lbl_status.setText(self._status[4])
-            self._bar_progress.setMaximum(len(children) + len(parents))
-            progress = 0
-            for child in children:
-                child.name = child.parent.name
-                child.parent = None
-                layer_children.addNode(child)
+                    progress += 1
+                    self._bar_progress.setValue(progress)
 
-                progress += 1
-                self._bar_progress.setValue(progress)
+                # 4/4
+                # Unparent children and organize objects into layers
+                self._lbl_status.setText(self._status[4])
+                self._bar_progress.setMaximum(len(children) + len(parents))
+                progress = 0
+                for child in children:
+                    child.name = child.parent.name
+                    child.parent = None
+                    layer_children.addNode(child)
 
-            for parent in parents:
-                layer_parents.addNode(parent)
+                    progress += 1
+                    self._bar_progress.setValue(progress)
 
-                progress += 1
-                self._bar_progress.setValue(progress)
+                for parent in parents:
+                    layer_parents.addNode(parent)
 
+                    progress += 1
+                    self._bar_progress.setValue(progress)
 
-            self._lbl_status.setText(self._status[5])
-            self._bar_progress.setValue(self._bar_progress.maximum())
+                # Done.
+                self._lbl_status.setText(self._status[5])
+                self._bar_progress.setValue(self._bar_progress.maximum())
+
+        except Exception as e:
+            print e
+            self._lbl_status.setText(self._status[6])
+            self._bar_progress.setMaximum(100)
+            self._bar_progress.setValue(0)
 
 
 # --------------------
@@ -206,4 +218,4 @@ ui = cleanDWGUI(_uif, pymxs, _app)
 ui.show()
 
 # DEBUG
-print "\rTest Version 3"
+# print "\rTest Version 4"
