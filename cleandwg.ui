@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>261</width>
-    <height>326</height>
+    <width>260</width>
+    <height>408</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -48,7 +48,7 @@
        <number>5</number>
       </property>
       <item>
-       <widget class="QLabel" name="label">
+       <widget class="QLabel" name="label_4">
         <property name="font">
          <font>
           <weight>75</weight>
@@ -56,20 +56,39 @@
          </font>
         </property>
         <property name="text">
+         <string>This operation is undoable, but it will clear earlier undo steps!</string>
+        </property>
+        <property name="wordWrap">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="Line" name="line_2">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="label">
+        <property name="font">
+         <font>
+          <weight>50</weight>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
          <string>Select objects to be cleaned up, then run the script with the button below.</string>
+        </property>
+        <property name="textFormat">
+         <enum>Qt::PlainText</enum>
         </property>
         <property name="wordWrap">
          <bool>true</bool>
         </property>
         <property name="textInteractionFlags">
          <set>Qt::NoTextInteraction</set>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="Line" name="line">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
         </property>
        </widget>
       </item>
@@ -107,7 +126,7 @@
          <enum>Qt::LeftToRight</enum>
         </property>
         <property name="text">
-         <string>Optionally, the selection will be expanded to include all parents and children of selected objects, or everything in the current scene.</string>
+         <string>Optionally, the selection will be expanded to include the full hierarchy of the selected objects, or everything in the current scene.</string>
         </property>
         <property name="wordWrap">
          <bool>true</bool>
@@ -132,6 +151,12 @@
    </item>
    <item>
     <widget class="QGroupBox" name="groupBox_2">
+     <property name="maximumSize">
+      <size>
+       <width>16777215</width>
+       <height>16777214</height>
+      </size>
+     </property>
      <property name="layoutDirection">
       <enum>Qt::LeftToRight</enum>
      </property>
@@ -141,13 +166,7 @@
      <property name="alignment">
       <set>Qt::AlignCenter</set>
      </property>
-     <layout class="QFormLayout" name="formLayout">
-      <property name="horizontalSpacing">
-       <number>5</number>
-      </property>
-      <property name="verticalSpacing">
-       <number>5</number>
-      </property>
+     <layout class="QVBoxLayout" name="verticalLayout_3">
       <property name="leftMargin">
        <number>5</number>
       </property>
@@ -160,22 +179,71 @@
       <property name="bottomMargin">
        <number>5</number>
       </property>
-      <item row="0" column="0">
-       <widget class="QCheckBox" name="chk_expand">
-        <property name="text">
-         <string>Expand selection?</string>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_2">
+        <property name="topMargin">
+         <number>0</number>
         </property>
-       </widget>
+        <item>
+         <widget class="QCheckBox" name="chk_layer">
+          <property name="toolTip">
+           <string>After cleanup, move all of the selected objects to the currently active layer.</string>
+          </property>
+          <property name="text">
+           <string>Move cleaned objects to current layer</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </item>
-      <item row="0" column="1">
-       <widget class="QCheckBox" name="chk_fullScene">
-        <property name="layoutDirection">
-         <enum>Qt::LeftToRight</enum>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout">
+        <property name="topMargin">
+         <number>0</number>
         </property>
-        <property name="text">
-         <string>Clean entire scene?</string>
-        </property>
-       </widget>
+        <item>
+         <widget class="QCheckBox" name="chk_expand">
+          <property name="toolTip">
+           <string>Expand the selection to include all objects in the selected objects' hierarchies.  Parents, children, etc.</string>
+          </property>
+          <property name="text">
+           <string>Expand selection</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="chk_fullScene">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="toolTip">
+           <string>Clean all objects in the scene.  This overrides &quot;Expand selection&quot;, and in some cases can be faster.</string>
+          </property>
+          <property name="layoutDirection">
+           <enum>Qt::LeftToRight</enum>
+          </property>
+          <property name="text">
+           <string>Clean entire scene</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </item>
      </layout>
     </widget>
@@ -193,6 +261,9 @@
        <weight>75</weight>
        <bold>true</bold>
       </font>
+     </property>
+     <property name="toolTip">
+      <string>Strips selected objects of their Block/Style Parents and preserves their transforms.</string>
      </property>
      <property name="text">
       <string>Clean Block/Style Parents</string>
