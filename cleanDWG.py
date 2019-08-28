@@ -1,6 +1,9 @@
 # ----------------------
-#   Clean DWG - v1.1.0
+#   Clean DWG - v1.2.0
 # ----------------------
+
+# Cleans up CAD imports by removing Block/Style Parent objects and converting CAD objects into Editable Meshes,
+# while preserving transforms and instancing.
 
 # Destroys instances of the dialog before recreating it
 # This has to go first, before modules are reloaded or the ui var is re-declared.
@@ -78,7 +81,7 @@ class cleanDWGUI(QtW.QDialog):
 
         # Titling
 
-        self._window_title = 'Clean DWG v1.1.0'
+        self._window_title = 'Clean DWG v1.2.0'
         self.setWindowTitle(self._window_title)
 
         # ---------------------------------------------------
@@ -108,10 +111,11 @@ class cleanDWGUI(QtW.QDialog):
 
         # Status label modes
         self._status = ['',
-                        '[1/4] Building list of objects...',
-                        '[2/4] Building list of Parents / Children...',
-                        '[3/4] Making Transform Controllers unique...',
-                        '[4/4] Cleaning up Parents...',
+                        '[1/5] Building list of objects...',
+                        '[2/5] Building list of Parents / Children...',
+                        '[3/5] Making Transform Controllers unique...',
+                        '[4/5] Converting CAD Objects to Meshes...',
+                        '[5/5] Cleaning up Parents...',
                         'Waiting for 3ds Max to un-freeze...',
                         'Done.',
                         '%s Cleanup failed!  Check the Max Listener for details.' % self._err]
@@ -151,7 +155,7 @@ class cleanDWGUI(QtW.QDialog):
 
         with self._pymxs.undo(True, 'Clean DWG'), self._pymxs.redraw(False):
             try:
-                # 1/4
+                # 1/5
                 # Build list of selected objects, optionally including their entire hierarchy.
                 self._lbl_status.setText(self._status[1])
                 selection = rt.getCurrentSelection()
@@ -202,7 +206,7 @@ class cleanDWGUI(QtW.QDialog):
                     print "Unknown error, please re-run the Clean DWG script."
                     return
 
-                # 2/4
+                # 2/5
                 # Build Parent / Child lists
                 self._lbl_status.setText(self._status[2])
                 self._bar_progress.setMaximum(len(selection))
@@ -212,15 +216,17 @@ class cleanDWGUI(QtW.QDialog):
                 parents = []
                 children = []
                 for obj in selection:
-                    if rt.classOf(obj) == rt.LinkComposite:
+                    # By converting the objects into strings, we can inspect otherwise inaccessible information.
+                    # Specifically, the beginning of the string provides the object type
+                    if str(obj)[:19] == "$Block_Style_Parent":
                         parents.append(obj)
-                    elif rt.classOf(obj.parent) == rt.LinkComposite:
+                    elif str(obj.parent)[:19] == "$Block_Style_Parent":
                         children.append(obj)
 
                     progress += 1
                     self._bar_progress.setValue(progress)
 
-                # 3/4
+                # 3/5
                 # Give each object unique transform controllers
                 self._lbl_status.setText(self._status[3])
                 progress = 0
@@ -233,9 +239,32 @@ class cleanDWGUI(QtW.QDialog):
                     progress += 1
                     self._bar_progress.setValue(progress)
 
-                # 4/4
-                # Unparent children, then delete old parents.  Optionally move children to current layer.
+                # 4/5
+                # Convert all VIZBlocks and Linked Geometry to Edit Meshes, preserve instancing
                 self._lbl_status.setText(self._status[4])
+                self._bar_progress.setMaximum(len(selection))
+                self._bar_progress.setValue(0)
+                progress = 0
+
+                cad_objs = 0
+                for obj in selection:
+                    # Similarly to parent/child detection, we'll search for CAD objects that need conversion
+                    obj_s = str(obj)
+                    if obj_s[:9] == "$VIZBlock" or obj_s[:16] == "$Linked_Geometry":
+                        rt.addModifier(obj, rt.Edit_Mesh())
+                        rt.maxOps.CollapseNodeTo(obj, 1, True)
+                        cad_objs += 1
+
+                    # DEBUG
+                    # elif obj_s[:14] != "$Editable_Mesh" and obj_s[:19] != "$Block_Style_Parent":
+                    #     print obj_s
+
+                    progress += 1
+                    self._bar_progress.setValue(progress)
+
+                # 5/5
+                # Unparent children, then delete old parents.  Optionally move children to current layer.
+                self._lbl_status.setText(self._status[5])
                 if layer:
                     self._bar_progress.setMaximum(len(children)*2)
                 else:
@@ -267,23 +296,24 @@ class cleanDWGUI(QtW.QDialog):
                 rt.delete(parents)
 
                 # Done.
-                self._lbl_status.setText(self._status[5])
+                self._lbl_status.setText(self._status[6])
                 self._bar_progress.setMaximum(1)
                 self._bar_progress.setValue(1)
 
                 # Print some info
                 print "Cleaned up %d Block/Style Parents" % len(parents)
+                print "Converted %d CAD Objects into Meshes" % cad_objs
 
             except Exception:
                 traceback.print_exc()
-                self._lbl_status.setText(self._status[7])
+                self._lbl_status.setText(self._status[8])
                 self._bar_progress.setMaximum(100)
                 self._bar_progress.setValue(0)
 
                 return
 
         # This should run after Max un-freezes
-        self._lbl_status.setText(self._status[6])
+        self._lbl_status.setText(self._status[7])
 
         return
 
