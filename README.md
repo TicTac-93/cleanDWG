@@ -1,7 +1,8 @@
 # Clean DWG
-##### v1.1.0
+##### v1.2.0
 
-A 3dsMax script that will clean up `Block/Style Parent` dummy objects in imported DWGs.
+A 3dsMax script that will clean up `Block/Style Parent` dummy objects in imported DWGs and
+convert 'VIZBlock' and 'Linked Geometry' objects into Editable Meshes, preserving instances.
 
 Install by copying the cleanDWG folder to your 3ds Max scripts directory.
 Run in 3ds Max using with the MaxScript snippet:
