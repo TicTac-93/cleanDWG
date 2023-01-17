@@ -1,5 +1,5 @@
 # ----------------------
-#   Clean DWG - v1.2.0
+#   Clean DWG - v1.3.0
 # ----------------------
 
 # Cleans up CAD imports by removing Block/Style Parent objects and converting CAD objects into Editable Meshes,
@@ -23,9 +23,10 @@ from PySide2.QtCore import QFile
 
 # Import PyMXS, MaxPlus, and set up shorthand vars
 import pymxs
-import MaxPlus
+import qtmax
+# import MaxPlus
 
-maxscript = MaxPlus.Core.EvalMAXScript
+maxscript = pymxs.runtime.execute
 
 # Misc
 import os
@@ -39,7 +40,7 @@ import traceback
 
 class cleanDWGUI(QtW.QDialog):
 
-    def __init__(self, ui_file, pymxs, parent=MaxPlus.GetQMaxMainWindow()):
+    def __init__(self, ui_file, pymxs, parent=qtmax.GetQMaxMainWindow()):
         """
         The Initialization of the main UI class
         :param ui_file: The path to the .UI file from QDesigner
@@ -81,7 +82,7 @@ class cleanDWGUI(QtW.QDialog):
 
         # Titling
 
-        self._window_title = 'Clean DWG v1.2.0'
+        self._window_title = 'Clean DWG v1.3.0'
         self.setWindowTitle(self._window_title)
 
         # ---------------------------------------------------
@@ -203,7 +204,7 @@ class cleanDWGUI(QtW.QDialog):
                 # Something fishy's going on...
                 else:
                     self._lbl_status.setText(self._status[6])
-                    print "Unknown error, please re-run the Clean DWG script."
+                    print("Unknown error, please re-run the Clean DWG script.")
                     return
 
                 # 2/5
@@ -257,7 +258,7 @@ class cleanDWGUI(QtW.QDialog):
 
                     # DEBUG
                     # elif obj_s[:14] != "$Editable_Mesh" and obj_s[:19] != "$Block_Style_Parent":
-                    #     print obj_s
+                    #     print(obj_s)
 
                     progress += 1
                     self._bar_progress.setValue(progress)
@@ -301,8 +302,8 @@ class cleanDWGUI(QtW.QDialog):
                 self._bar_progress.setValue(1)
 
                 # Print some info
-                print "Cleaned up %d Block/Style Parents" % len(parents)
-                print "Converted %d CAD Objects into Meshes" % cad_objs
+                print("Cleaned up %d Block/Style Parents" % len(parents))
+                print("Converted %d CAD Objects into Meshes" % cad_objs)
 
             except Exception:
                 traceback.print_exc()
@@ -324,11 +325,11 @@ class cleanDWGUI(QtW.QDialog):
 
 # Path to UI file
 _uif = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__))) + "\\cleandwg.ui"
-_app = MaxPlus.GetQMaxMainWindow()
+_app = qtmax.GetQMaxMainWindow()
 ui = cleanDWGUI(_uif, pymxs, _app)
 
 # Punch it
 ui.show()
 
 # DEBUG
-# print "\rTest Version 7"
+# print("\rTest Version 7")
