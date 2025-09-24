@@ -16,10 +16,10 @@ except:
 #       Modules
 # --------------------
 
-# PySide 2
-from PySide2.QtUiTools import QUiLoader
-import PySide2.QtWidgets as QtW
-from PySide2.QtCore import QFile
+# PySide 6
+from PySide6.QtUiTools import QUiLoader
+import PySide6.QtWidgets as QtW
+from PySide6.QtCore import QFile
 
 # Import PyMXS, MaxPlus, and set up shorthand vars
 import pymxs
